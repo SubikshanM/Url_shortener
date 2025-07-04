@@ -19,5 +19,5 @@ A sleek and responsive **URL Shortener Web App** built with **HTML, CSS, and Jav
 
 ## 🖼️ Preview
 
-![Screenshot](https://github.com/subikshanm/Url_shortener/assets/preview.png) <!-- Replace this with your actual screenshot path -->
+![Screenshot](https://github.com/SubikshanM/Url_shortener/blob/main/assets/preview.png) <!-- Replace this with your actual screenshot path -->
 
