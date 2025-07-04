@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>URL Shortener</title>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="icon" href="subikshan_logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      color: #333;
+      min-height: 100vh;
+      transition: background 0.4s ease, color 0.4s ease;
+      padding: 40px 20px 100px;
+    }
+
+    body.dark {
+      background: linear-gradient(135deg, #1e1e2f, #2c3e50);
+      color: #f0f0f0;
+    }
+
+    .toggle-dark {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.4s ease, transform 0.3s ease, color 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 9999;
+      font-size: 20px;
+    }
+
+    body.dark .toggle-dark {
+      background-color: #ffffff;
+      color: #111;
+    }
+
+    body:not(.dark) .toggle-dark {
+      background-color: #111;
+      color: #fff;
+    }
+
+    .toggle-dark:hover {
+      transform: scale(1.1) rotate(180deg);
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: background 0.4s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: fadeInSlideUp 0.8s ease-out forwards;
+    }
+
+    body.dark .container {
+      background: rgba(20, 20, 30, 0.5);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      margin-bottom: 15px;
+      transition: box-shadow 0.3s, transform 0.3s;
+    }
+
+    input[type="text"]:focus {
+      box-shadow: 0 0 12px rgba(0, 123, 255, 0.4);
+      transform: scale(1.02);
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+    }
+
+    .primary {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .secondary {
+      background-color: #007bff;
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.06);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    #resultBox, #historyBox {
+      margin-top: 25px;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      display: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    #resultBox.show,
+    #historyBox.show {
+      display: block;
+      animation: fadeInSlideUp 0.6s ease-out;
+    }
+
+    #shortUrlBox {
+      background: #e6f9ed; /* Light mode: soft green */
+      padding: 12px 18px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #b5e6cc;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      word-break: break-word;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    body.dark #shortUrlBox {
+      background: rgba(0, 128, 128, 0.25); /* Dark mode: teal */
+      border: 1px solid rgba(0, 255, 255, 0.3);
+    }
+
+    #qrCode {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    #resultBox .button-group {
+      margin-top: 20px;
+    }
+
+    body.dark #resultBox, body.dark #historyBox {
+      background: rgba(30, 30, 30, 0.6);
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    @keyframes fadeInSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media screen and (max-width: 500px) {
+      .container {
+        padding: 20px;
+      }
+
+      .button-group {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Theme Toggle Button -->
+  <button class="toggle-dark" id="themeToggle" onclick="toggleDarkMode()" title="Toggle Theme">
+    <i class="fa-solid fa-moon" id="toggleIcon"></i>
+  </button>
+
+  <!-- App Container -->
+  <div class="container">
+    <h1>🔗 TinyURL Shortener</h1>
+
+    <input type="text" id="longUrl" placeholder="Enter long URL here" />
+
+    <div class="button-group">
+      <button class="primary" onclick="shortenUrl()">Shorten</button>
+    </div>
+
+    <div id="resultBox">
+      <div id="shortUrlBox">
+        <p id="resultLink"></p>
+      </div>
+      <div id="qrCode"></div>
+      <div class="button-group">
+        <button class="secondary" id="copyBtn">Copy to Clipboard</button>
+        <button class="secondary" onclick="downloadQRCode()">Download QR Code</button>
+      </div>
+    </div>
+
+    <div id="historyBox">
+      <h3>📜 Recent Shortened Links</h3>
+      <ul id="historyList"></ul>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const resultBox = document.getElementById("resultBox");
+    const resultLink = document.getElementById("resultLink");
+    const qrContainer = document.getElementById("qrCode");
+    const copyBtn = document.getElementById("copyBtn");
+    const toggleIcon = document.getElementById("toggleIcon");
+
+    let qr;
+
+    function shortenUrl() {
+      const longUrl = document.getElementById("longUrl").value.trim();
+      if (!longUrl.startsWith("http")) {
+        resultLink.innerHTML = `<span style="color:red;">⚠️ Enter a valid URL with http:// or https://</span>`;
+        resultBox.classList.add("show");
+        qrContainer.innerHTML = "";
+        return;
+      }
+
+      fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`)
+        .then(res => res.text())
+        .then(shortUrl => {
+          resultLink.innerHTML = `✅ Shortened: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
+          copyBtn.onclick = () => copyToClipboard(shortUrl);
+          generateQRCode(shortUrl);
+          saveToHistory(shortUrl);
+          resultBox.classList.add("show");
+          showHistory();
+        })
+        .catch(() => {
+          resultLink.innerHTML = `<span style="color:red;">❌ Failed to shorten. Try again.</span>`;
+          resultBox.classList.add("show");
+        });
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
+    }
+
+    function generateQRCode(url) {
+      qrContainer.innerHTML = "";
+      qr = new QRious({
+        element: document.createElement('canvas'),
+        value: url,
+        size: 200
+      });
+      qrContainer.appendChild(qr.element);
+    }
+
+    function downloadQRCode() {
+      if (qr && qr.element) {
+        const link = document.createElement('a');
+        link.download = "short-url-qr.png";
+        link.href = qr.element.toDataURL();
+        link.click();
+      }
+    }
+
+    function saveToHistory(url) {
+      let history = JSON.parse(localStorage.getItem("shortHistory") || "[]");
+      if (!history.includes(url)) {
+        history.unshift(url);
+        if (history.length > 5) history.pop();
+        localStorage.setItem("shortHistory", JSON.stringify(history));
+      }
+    }
+
+    function showHistory() {
+      const list = document.getElementById("historyList");
+      const history = JSON.parse(localStorage.getItem("shortHistory") || "[]");
+      if (history.length === 0) return;
+      list.innerHTML = "";
+      history.forEach(link => {
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+        list.appendChild(li);
+      });
+      document.getElementById("historyBox").classList.add("show");
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      toggleIcon.className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    }
+
+    window.onload = () => {
+      showHistory();
+      const isDark = document.body.classList.contains("dark");
+      toggleIcon.className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
+    };
+  </script>
+</body>
+</html>
